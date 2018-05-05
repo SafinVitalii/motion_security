@@ -1,6 +1,7 @@
 import datetime
-import time
 import os
+import time
+
 import cv2
 import imutils
 import numpy as np
@@ -12,14 +13,18 @@ from processors.mailer import Mailer
 
 
 class Monitor(object):
-    def __init__(self, webcam_id):
+    def __init__(self, webcam_id, subscribers=None):
         self.mailer = Mailer()
         self.fourcc = cv2.VideoWriter_fourcc(*'XVID')
         self.webcam_id = webcam_id
-        self.camera_fps = 9.53
+        self.out_file = 'output{}.avi'.format(self.webcam_id)
+        self.camera_fps = self.get_optimal_fps()
         self.sleep_after_frame = 1 / self.camera_fps
         self.default_buffer_duration = 10
-        # self.camera_fps = self.get_optimal_fps(self.webcam_id)
+        self.optimal_fps = None
+        if not subscribers or not isinstance(subscribers, list):
+            subscribers = ["vitaliylviv3@gmail.com"]
+        self.subscribers = subscribers
 
     def capture_video_and_motion(self):
         webcam = VideoStream(src=self.webcam_id).start()
@@ -68,7 +73,7 @@ class Monitor(object):
             for frame in frames:
                 cv2.putText(frame, ts, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,
                             0.35, (0, 0, 255), 1)
-                cv2.imshow("Camera", frame)
+                cv2.imshow("Camera {}".format(self.webcam_id), frame)
             buffer.append(frame)
             frames = []
 
@@ -78,7 +83,7 @@ class Monitor(object):
 
             if buffer.motions and len(buffer) >= self.camera_fps * self.default_buffer_duration:
                 out = cv2.VideoWriter(
-                    os.path.join(os.getcwd(), 'output.avi'),
+                    os.path.join(os.getcwd(), self.out_file),
                     self.fourcc, self.camera_fps, (400, 300)
                 )
                 for frame in buffer:
@@ -89,10 +94,10 @@ class Monitor(object):
                 date = datetime.datetime.now().strftime("%x")
                 self.mailer.send_mail(
                     send_from="mailtestrasp@gmail.com",
-                    send_to=["vitaliylviv3@gmail.com"],
+                    send_to=self.subscribers,
                     subject="Raspberry Pi monitoring alert {}".format(date),
                     text="Hi! Look what happened during your absence.",
-                    files=[os.path.join(os.getcwd(), 'output.avi')]
+                    files=[os.path.join(os.getcwd(), self.out_file)]
                 )
                 print "Report was sent."
 
@@ -105,22 +110,22 @@ class Monitor(object):
         cv2.destroyAllWindows()
         webcam.stop()
 
-    def get_optimal_fps(self, webcam_id=0):
-        video = cv2.VideoCapture(webcam_id)
-        num_frames = 240  # Number of frames to capture
+    def get_optimal_fps(self):
+        """ Get average FPS for the camera """
+        video = cv2.VideoCapture(self.webcam_id)
+        num_frames = 250  # Number of frames to capture
 
         print "Capturing {} frames".format(num_frames)
 
-        start = time.time()  # Start time
-
-        # Grab a few frames
+        start = time.time()
         for i in xrange(0, num_frames):
-            ret, frame = video.read()
-
-        end = time.time()  # End time
-
+            video.read()
+        end = time.time()
         seconds = end - start  # Time elapsed
         print "Time taken : {} seconds".format(seconds)
 
         fps = num_frames / seconds
+        self.optimal_fps = fps
         print "Estimated frames per second : {}".format(fps)
+
+        return self.optimal_fps

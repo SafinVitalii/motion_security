@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Home page</title>
+</head>
+<body>
+<h3>Welcome to home page!</h3>
+<br>
+<h4>Available devices:</h4>
+<ul>
+    {% for device in devices %}
+    {% for key, value in device.iteritems() %}
+
+    <li>
+        <a href="/devices/{{key}}"> Camera {{key}} </a>: {{value}}
+    </li>
+
+    {% endfor %}
+    {% endfor %}
+</ul>
+</body>
+</html>
