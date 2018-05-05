@@ -1,3 +1,4 @@
+import requests
 from functools import wraps
 from flask import request, Response
 
@@ -11,7 +12,7 @@ def check_auth(username, password):
 def authenticate():
     return Response(
         'Could not verify your access level for that URL.\n'
-        'You have to login with proper credentials', 401,
+        'You have to login with proper credentials', requests.codes.unauthorized,
         {'WWW-Authenticate': 'Basic realm="Login Required"'}
     )
 

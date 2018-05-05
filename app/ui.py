@@ -1,3 +1,4 @@
+import requests
 from flask import Blueprint, render_template, Response
 from werkzeug.exceptions import abort
 
@@ -21,16 +22,16 @@ def device(device_id):
     try:
         int(device_id)
     except ValueError:
-        abort(Response(status=400, response="Invalid device id specified."))
+        abort(Response(status=requests.codes.bad_request, response="Invalid device id specified."))
 
     devices = available_devices()
     if int(device_id) < 0:
-        abort(Response(status=404, response="Device not found."))
+        abort(Response(status=requests.codes.not_found, response="Device not found."))
     for dev in devices:
         if dev.keys()[0] == device_id:
             break
     else:
-        abort(Response(status=404, response="Device not found."))
+        abort(Response(status=requests.codes.not_found, response="Device not found."))
 
     # config = database.get_config_of_camera()
     # add config to template
