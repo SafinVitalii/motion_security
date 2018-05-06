@@ -5,18 +5,17 @@ from werkzeug.exceptions import abort
 from app.auth import requires_auth
 from app.info import available_devices
 
-home_page = Blueprint('home_page', __name__, template_folder='templates')
-device_page = Blueprint('device_page', __name__, template_folder='templates')
+router = Blueprint('router', __name__, template_folder='templates')
 
 
-@home_page.route('/')
-@home_page.route('/home/')
+@router.route('/')
+@router.route('/home/')
 @requires_auth
 def home():
     return render_template('home.html', devices=available_devices())
 
 
-@home_page.route('/devices/<device_id>')
+@router.route('/devices/<device_id>')
 @requires_auth
 def device(device_id):
     try:
@@ -36,3 +35,30 @@ def device(device_id):
     # config = database.get_config_of_camera()
     # add config to template
     return render_template('device.html', device_id=device_id)
+
+
+@router.route('/devices/<device_id>/content')
+@requires_auth
+def content():
+    return render_template('content.html')
+
+
+@router.route('/login/')
+def login():
+    return render_template('login.html')
+
+
+@router.route('/register/')
+def register():
+    return render_template('register.html')
+
+
+@router.route('/help/')
+def help():
+    return render_template('help.html')
+
+
+@router.route('/documentation/')
+@requires_auth
+def documentation():
+    return render_template('documentation.html')
