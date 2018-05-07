@@ -3,7 +3,6 @@ import os
 import time
 
 import cv2
-import imutils
 import numpy as np
 from imutils.video import VideoStream
 
@@ -37,8 +36,6 @@ class Monitor(object):
             time.sleep(self.sleep_after_frame)
 
             frame = webcam.read()
-            frame = imutils.resize(frame, width=400)
-
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             gray = cv2.GaussianBlur(gray, (21, 21), 0)
             locs = cam_motion.update(gray)
@@ -84,7 +81,7 @@ class Monitor(object):
             if buffer.motions and len(buffer) >= self.camera_fps * self.default_buffer_duration:
                 out = cv2.VideoWriter(
                     os.path.join(os.getcwd(), self.out_file),
-                    self.fourcc, self.camera_fps, (400, 300)
+                    self.fourcc, self.camera_fps, (640, 480)
                 )
                 for frame in buffer:
                     out.write(frame)
