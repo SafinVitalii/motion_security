@@ -3,21 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <title>Home page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='project-styles.css') }}">
 </head>
 <body>
-<h3>Welcome to home page!</h3>
-<br>
-<h4>Available devices:</h4>
-<ul>
-    {% for device in devices %}
-    {% for key, value in device.iteritems() %}
+<div class="page-content">
+    <div class="columns">
+        <div class="column">
+            <div class="widget">
+                <h3 class="header">
+                    Available devices:
+                </h3>
+                <div class="clearing divider"></div>
+                <div class="content">
 
-    <li>
-        <a href="/devices/{{key}}"> Camera {{key}} </a>: {{value}}
-    </li>
+                        {% for device in devices %}
+                        {% for key, value in device.iteritems() %}
 
-    {% endfor %}
-    {% endfor %}
-</ul>
+                        <div class="item">
+                            <div class="main-content">
+                                <div class="icon {{value}} cycled bordered"></div>
+                                <a href="/devices/{{key}}">  Camera {{key}} </a>
+                            </div>
+                            <div class="label">{{value}}</div>
+                        </div>
+
+                        {% endfor %}
+                        {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="column">
+
+        </div>
+    </div>
+</div>
 </body>
 </html>

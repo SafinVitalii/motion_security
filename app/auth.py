@@ -6,7 +6,7 @@ from flask import request, Response
 def check_auth(username, password):
     with open("./processors/password.txt", "r") as password_file:
         user_password = password_file.read()
-    return username == 'admin' and password == user_password
+    return username == 'admin' and password == 'password'
 
 
 def authenticate():

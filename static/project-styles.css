@@ -1,0 +1,85 @@
+div.page-content {
+    padding: 3em;
+}
+
+div.columns {
+    display: flex;
+    flex-direction: row;
+}
+
+div.column {
+    flex: 1 1 auto;
+}
+
+div.widget {
+    width: 70%;
+    padding: 1em;
+    border-radius: .3em;
+    border: 1px solid rgba(34, 36, 38, .15);
+    box-shadow: 0 1px 2px 0 rgba(34, 36, 38, .15);
+}
+
+.widget > .content {
+    padding-top: 1em;
+}
+
+.item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.item > .main-content {
+    padding: 0.2em;
+
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.divider:not(.vertical):not(.horizontal) {
+    border-top: 1px solid rgba(34, 36, 38, .15);
+    border-bottom: 1px solid rgba(255, 255, 255, .1);
+}
+
+.clearing.divider {
+    clear: both;
+}
+
+a {
+    color: #4183c4;
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.icon {
+    margin-right: .3em;
+    display: inline-block;
+    height: 15px;
+    width: 15px;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+
+.icon.cycled {
+    border-radius: 500rem;
+}
+
+.icon.Active {
+    background-color: #54c8ff;
+}
+
+.icon.Available {
+    background-color: white;
+}
+
+.icon.Disabled {
+    background-color: crimson;
+}
+
+.icon.bordered {
+    border: 1px solid dimgray;
+}
