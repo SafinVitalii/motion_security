@@ -12,14 +12,16 @@ from processors.mailer import Mailer
 
 
 class Monitor(object):
-    def __init__(self, webcam_id, subscribers=None):
+    def __init__(self, webcam_id, subscribers=None, streaming=False):
         self.mailer = Mailer()
         self.fourcc = cv2.VideoWriter_fourcc(*'XVID')
         self.webcam_id = webcam_id
         self.out_file = 'output{}.avi'.format(self.webcam_id)
-        self.camera_fps = self.get_optimal_fps()
-        self.sleep_after_frame = 1 / self.camera_fps
-        self.default_buffer_duration = 10
+        self.streamer = cv2.VideoCapture(self.webcam_id)
+        if not streaming:
+            self.camera_fps = self.get_optimal_fps()
+            self.sleep_after_frame = 1 / self.camera_fps
+            self.default_buffer_duration = 10
         if not subscribers or not isinstance(subscribers, list):
             subscribers = ["vitaliylviv3@gmail.com"]
         self.subscribers = subscribers
@@ -121,6 +123,22 @@ class Monitor(object):
         # Cleanup
         cv2.destroyAllWindows()
         webcam.stop()
+
+    def get_frame(self):
+        """ Read frame and encode to jpg"""
+        success, image = self.streamer.read()
+        ret, jpeg = cv2.imencode('.jpg', image)
+        return jpeg.tobytes()
+
+    def stream(self):
+        """Video streaming generator function."""
+        while True:
+            frame = self.get_frame()
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+
+    def __del__(self):
+        self.streamer.release()
 
     def get_optimal_fps(self):
         """ Get average FPS for the camera """

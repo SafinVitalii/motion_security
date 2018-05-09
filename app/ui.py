@@ -4,6 +4,7 @@ from werkzeug.exceptions import abort
 
 from app.auth import requires_auth
 from app.info import available_devices
+from processors.monitor import Monitor
 
 router = Blueprint('router', __name__, template_folder='templates')
 
@@ -34,13 +35,23 @@ def device(device_id):
 
     # config = database.get_config_of_camera()
     # add config to template
-    return render_template('device.html', device_id=device_id)
+    return render_template('device.html', device_id=device_id,
+                           content_url='/devices/{}/content/'.format(int(device_id)))
 
 
-@router.route('/devices/<device_id>/content')
+@router.route('/devices/<device_id>/content/')
 @requires_auth
-def content():
-    return render_template('content.html')
+def content(device_id):
+    return render_template('content.html', video_url='/devices/{}/video/'.format(int(device_id)))
+
+
+@router.route('/devices/<int:device_id>/video/')
+@requires_auth
+def video(device_id):
+    """Video streaming route. Put this in the src attribute of an img tag."""
+    monitor = Monitor(webcam_id=int(device_id), subscribers=[], streaming=True)
+    return Response(monitor.stream(),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 @router.route('/login/')
