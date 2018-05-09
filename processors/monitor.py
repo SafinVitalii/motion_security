@@ -20,17 +20,20 @@ class Monitor(object):
         self.camera_fps = self.get_optimal_fps()
         self.sleep_after_frame = 1 / self.camera_fps
         self.default_buffer_duration = 10
-        self.optimal_fps = None
         if not subscribers or not isinstance(subscribers, list):
             subscribers = ["vitaliylviv3@gmail.com"]
         self.subscribers = subscribers
 
     def capture_video_and_motion(self):
+        """ Automatic motion capturing """
         webcam = VideoStream(src=self.webcam_id).start()
         cam_motion = BasicMotionDetector()
         total = 0
         buffer = Buffer()
         frames = []
+        motions_in_previous = False
+        merged_buffers = 1
+        frame_limit = self.camera_fps * self.default_buffer_duration
 
         while True:
             time.sleep(self.sleep_after_frame)
@@ -48,7 +51,7 @@ class Monitor(object):
                 frames.append(frame)
                 continue
 
-            if locs:
+            if locs and total >= starting_frames * 2:
                 minX, minY = np.inf, np.inf
                 maxX, maxY = -np.inf, -np.inf
 
@@ -61,6 +64,7 @@ class Monitor(object):
 
                 cv2.rectangle(frame, (minX, minY), (maxX, maxY), (0, 0, 255), 2)
                 buffer.motions = True
+                motions_in_previous = True
 
             frames.append(frame)
             total += 1
@@ -78,7 +82,9 @@ class Monitor(object):
             if key == ord("q"):
                 break
 
-            if buffer.motions and len(buffer) >= self.camera_fps * self.default_buffer_duration:
+            if not buffer.motions \
+                    and motions_in_previous \
+                    and len(buffer) >= frame_limit * merged_buffers:
                 out = cv2.VideoWriter(
                     os.path.join(os.getcwd(), self.out_file),
                     self.fourcc, self.camera_fps, (640, 480)
@@ -87,7 +93,8 @@ class Monitor(object):
                     out.write(frame)
                 print "Clearing buffer of {} frames.".format(len(buffer))
                 del buffer[:]
-                buffer.motions = False
+                motions_in_previous = False
+                merged_buffers = 1
                 date = datetime.datetime.now().strftime("%x")
                 self.mailer.send_mail(
                     send_from="mailtestrasp@gmail.com",
@@ -96,11 +103,19 @@ class Monitor(object):
                     text="Hi! Look what happened during your absence.",
                     files=[os.path.join(os.getcwd(), self.out_file)]
                 )
-                print "Report was sent."
+                print "Report was sent to : {}".format(','.join(self.subscribers[0:5]))
+                if len(self.subscribers) > 5:
+                    print "And a few others. Total mails sent: {}".format(len(self.subscribers))
 
-            elif len(buffer) >= self.camera_fps * self.default_buffer_duration:
-                print "Dropping buffer of {} frames.".format(len(buffer))
-                del buffer[:]
+            elif len(buffer) >= frame_limit * merged_buffers:
+                if buffer.motions:
+                    print "Continue with recording. Current buffer size: {} seconds".format(
+                        len(buffer) / self.camera_fps
+                    )
+                    merged_buffers += 1
+                else:
+                    print "Dropping buffer of {} frames.".format(len(buffer))
+                    del buffer[:]
                 buffer.motions = False
 
         # Cleanup
@@ -122,7 +137,7 @@ class Monitor(object):
         print "Time taken : {} seconds".format(seconds)
 
         fps = num_frames / seconds
-        self.optimal_fps = fps
+        self.camera_fps = fps
         print "Estimated frames per second : {}".format(fps)
 
-        return self.optimal_fps
+        return self.camera_fps

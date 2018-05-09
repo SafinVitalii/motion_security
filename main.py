@@ -6,6 +6,6 @@ app = Flask(__name__)
 
 if __name__ == '__main__':
     app.register_blueprint(router)
-    app.run(host='192.168.0.107')
+    app.run()
     # monitor = Monitor(webcam_id=0)
     # monitor.capture_video_and_motion()
