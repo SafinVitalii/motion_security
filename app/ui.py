@@ -1,6 +1,10 @@
+import re
 import requests
-from flask import Blueprint, render_template, Response
+
+from email.utils import parseaddr
+from flask import Blueprint, render_template, Response, request
 from werkzeug.exceptions import abort
+from werkzeug.utils import redirect
 
 from app.auth import requires_auth
 from app.info import available_devices
@@ -10,6 +14,11 @@ router = Blueprint('router', __name__, template_folder='templates')
 
 
 @router.route('/')
+@router.route('/index/')
+def index():
+    return render_template('index.html')
+
+
 @router.route('/home/')
 @requires_auth
 def home():
@@ -59,9 +68,33 @@ def login():
     return render_template('login.html')
 
 
-@router.route('/register/')
+@router.route('/register/', methods=['GET', 'POST'])
 def register():
-    return render_template('register.html')
+    if request.method == 'POST':
+        form = request.form
+
+        error_msg = None
+        if not form.get('email') or not form.get('password'):
+            error_msg = 'Both email and password are required!'
+        elif parseaddr(form.get('email'))[1] == '':
+            error_msg = 'Invalid email! Please try again.'
+        elif len(form.get('password')) < 8:
+            error_msg = 'Make sure your password is at least 8 letters.'
+        elif not re.search('[0-9]', form.get('password')):
+            error_msg = 'Make sure your password has a number in it.'
+        elif not re.search('[A-Z]', form.get('password')):
+            error_msg = 'Make sure your password has a capital letter in it.'
+
+        if error_msg:
+            return render_template(
+                'register.html', error=error_msg, email=form.get('email'),
+                password=form.get('password')
+            ), requests.codes.bad_request
+
+        # save to db
+        return redirect('/index')
+    else:
+        return render_template('register.html')
 
 
 @router.route('/help/')
