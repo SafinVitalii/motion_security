@@ -1,28 +1,33 @@
-import requests
 from functools import wraps
-from flask import request, Response
+
+from bcrypt import hashpw, gensalt
+from flask import session
+from werkzeug.utils import redirect
+
+from models.model import Model
 
 
-def check_auth(username, password):
-    with open("./processors/password.txt", "r") as password_file:
-        user_password = password_file.read()
-    return username == 'admin' and password == 'password'
-
-
-def authenticate():
-    return Response(
-        'Could not verify your access level for that URL.\n'
-        'You have to login with proper credentials', requests.codes.unauthorized,
-        {'WWW-Authenticate': 'Basic realm="Login Required"'}
-    )
-
-
-def requires_auth(f):
+def login_required(f):
     @wraps(f)
-    def decorated(*args, **kwargs):
-        auth = request.authorization
-        if not auth or not check_auth(auth.username, auth.password):
-            return authenticate()
+    def decorated_function(*args, **kwargs):
+        try:
+            session['user']
+        except KeyError:
+            return redirect('/login')
+        if not session['user']:
+            return redirect('/login')
         return f(*args, **kwargs)
 
-    return decorated
+    return decorated_function
+
+
+def verify_password(email, password):
+    user = Model(table='users').read(email)
+    if not user or not hashpw(password, str(user[0][1])) == user[0][1]:
+        return False
+    session['user'] = user[0][2]
+    return True
+
+
+def encrypt(password):
+    return hashpw(password, gensalt())

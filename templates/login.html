@@ -5,6 +5,20 @@
     <title>Login</title>
 </head>
 <body>
-<!-- You know what should be here -->
+<h4>Login</h4>
+<br>
+<form method="post" action="/login/">
+    <!-- Try not to edit the backend mappings -->
+    <br>
+    <label for="email">Email:</label>
+    <input type="text" class="form-control" id="email" name="email" value="{{email}}"
+           placeholder="Email address.">
+    <br>
+    <label for="password">Password:</label>
+    <input type="password" class="form-control" id="password" name="password" value="{{password}}"
+           placeholder="Enter a password.">
+    <p><input type="submit" value="Login"></p>
+    <p style="color: red;">{{error}}</p>
+</form>
 </body>
 </html>

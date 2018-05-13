@@ -1,13 +1,15 @@
 import re
+
 import requests
 
 from email.utils import parseaddr
-from flask import Blueprint, render_template, Response, request
+from flask import Blueprint, render_template, Response, request, g, session, url_for
 from werkzeug.exceptions import abort
 from werkzeug.utils import redirect
 
-from app.auth import requires_auth
+from app.auth import encrypt, verify_password, login_required
 from app.info import available_devices
+from models.model import Model
 from processors.monitor import Monitor
 
 router = Blueprint('router', __name__, template_folder='templates')
@@ -21,14 +23,14 @@ def index():
 
 
 @router.route('/home/')
-@requires_auth
+@login_required
 def home():
     """ Dashboard """
-    return render_template('home.html', devices=available_devices())
+    return render_template('home.html', devices=available_devices(), user=session['user'])
 
 
 @router.route('/devices/<device_id>')
-@requires_auth
+@login_required
 def device(device_id):
     """ Camera home """
     try:
@@ -74,14 +76,14 @@ def device(device_id):
 
 
 @router.route('/devices/<device_id>/content/')
-@requires_auth
+@login_required
 def content(device_id):
     """ Page for video frame """
     return render_template('content.html', video_url='/devices/{}/video/'.format(int(device_id)))
 
 
 @router.route('/devices/<int:device_id>/video/')
-@requires_auth
+@login_required
 def video(device_id):
     """ Video streaming route. Put this in the src attribute of an img tag """
     monitor = Monitor(webcam_id=int(device_id), subscribers=[], streaming=True)
@@ -89,10 +91,40 @@ def video(device_id):
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
-@router.route('/login/')
+@router.route('/login/', methods=['GET', 'POST'])
 def login():
     """ Login page """
-    return render_template('login.html')
+    if request.method == 'POST':
+        form = request.form
+
+        error_msg = None
+        if not form.get('email') or not form.get('password'):
+            error_msg = 'Both email and password are required!'
+
+        email = form.get('email')
+        password = str(form.get('password'))
+        result = verify_password(email, password)
+
+        if not result:
+            error_msg = 'Error occured when logging in. Please verify your credentials.'
+
+        if error_msg:
+            return render_template(
+                'login.html', error=error_msg, email=form.get('email'),
+                password=form.get('password')
+            ), requests.codes.bad_request
+
+        return redirect('/home'), requests.codes.ok
+
+    else:
+        return render_template('login.html'), requests.codes.ok
+
+
+@router.route('/logout/', methods=['GET'])
+def logout():
+    """ Logout """
+    del session['user']
+    return redirect('/')
 
 
 @router.route('/register/', methods=['GET', 'POST'])
@@ -106,6 +138,8 @@ def register():
             error_msg = 'Both email and password are required!'
         elif parseaddr(form.get('email'))[1] == '':
             error_msg = 'Invalid email! Please try again.'
+        elif Model(table='users').read(form.get('email')):
+            error_msg = 'User with such email already exists.'
         elif len(form.get('password')) < 8:
             error_msg = 'Make sure your password is at least 8 letters.'
         elif not re.search('[0-9]', form.get('password')):
@@ -119,8 +153,12 @@ def register():
                 password=form.get('password')
             ), requests.codes.bad_request
 
-        # save to db
-        return redirect('/index')
+        email = str(form.get('email'))
+        password = str(form.get('password'))
+        user = Model(table='users')
+        hashed_password = encrypt(password)
+        user.create(row={'email': email, 'password': hashed_password})
+        return redirect('/home')
     else:
         return render_template('register.html')
 
@@ -132,7 +170,7 @@ def help():
 
 
 @router.route('/documentation/')
-@requires_auth
+@login_required
 def documentation():
     """ User guide and API doc """
     return render_template('documentation.html')
