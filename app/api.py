@@ -1,16 +1,15 @@
 import re
+from email.utils import parseaddr
 
 import requests
-
-from email.utils import parseaddr
-from flask import Blueprint, render_template, Response, request, g, session, url_for
+from flask import Blueprint, render_template, Response, request, session
 from werkzeug.exceptions import abort
 from werkzeug.utils import redirect
 
 from app.auth import encrypt, verify_password, login_required
 from app.info import available_devices
 from models.model import Model
-from processors.monitor import Monitor
+from processors.monitor import Monitor, d
 
 router = Blueprint('router', __name__, template_folder='templates')
 
@@ -47,29 +46,29 @@ def device(device_id):
     else:
         abort(Response(status=requests.codes.not_found, response="Device not found."))
 
-    # config = database.get_config_of_camera()
+    camera_config = d[int(device_id)].get_config()
     # Sample config:
-    camera_config = {
-        'CV_CAP_PROP_POS_MSEC': "Current position of the video file in milliseconds",
-        'CV_CAP_PROP_POS_FRAMES': " 0-based index of the frame to be decoded/captured next.",
-        'CV_CAP_PROP_POS_AVI_RATIO': " Relative position of the video file",
-        'CV_CAP_PROP_FRAME_WIDTH': " Width of the frames in the video stream.",
-        'CV_CAP_PROP_FRAME_HEIGHT': " Height of the frames in the video stream.",
-        'CV_CAP_PROP_FPS': " Frame rate.",
-        'CV_CAP_PROP_FOURCC': " 4-character code of codec.",
-        'CV_CAP_PROP_FRAME_COUNT': " Number of frames in the video file.",
-        'CV_CAP_PROP_FORMAT': " Format of the Mat objects returned by retrieve() .",
-        'CV_CAP_PROP_MODE': " Backend-specific value indicating the current capture mode.",
-        'CV_CAP_PROP_BRIGHTNESS': " Brightness of the image (only for cameras).",
-        'CV_CAP_PROP_CONTRAST': " Contrast of the image (only for cameras).",
-        'CV_CAP_PROP_SATURATION': " Saturation of the image (only for cameras).",
-        'CV_CAP_PROP_HUE': " Hue of the image (only for cameras).",
-        'CV_CAP_PROP_GAIN': " Gain of the image (only for cameras).",
-        'CV_CAP_PROP_EXPOSURE': " Exposure (only for cameras).",
-        'CV_CAP_PROP_CONVERT_RGB': " Boolean flags indicating whether images should be converted to RGB.",
-        'CV_CAP_PROP_WHITE_BALANCE': " Currently unsupported",
-        'CV_CAP_PROP_RECTIFICATION': " Rectification flag for stereo cameras"
-    }
+    # camera_config = {
+    #   'CV_CAP_PROP_POS_MSEC': "Current position of the video file in milliseconds",
+    #  'CV_CAP_PROP_POS_FRAMES': " 0-based index of the frame to be decoded/captured next.",
+    # 'CV_CAP_PROP_POS_AVI_RATIO': " Relative position of the video file",
+    # 'CV_CAP_PROP_FRAME_WIDTH': " Width of the frames in the video stream.",
+    #    'CV_CAP_PROP_FRAME_HEIGHT': " Height of the frames in the video stream.",
+    #   'CV_CAP_PROP_FPS': " Frame rate.",
+    #  'CV_CAP_PROP_FOURCC': " 4-character code of codec.",
+    # 'CV_CAP_PROP_FRAME_COUNT': " Number of frames in the video file.",
+    # 'CV_CAP_PROP_FORMAT': " Format of the Mat objects returned by retrieve() .",
+    #    'CV_CAP_PROP_MODE': " Backend-specific value indicating the current capture mode.",
+    #   'CV_CAP_PROP_BRIGHTNESS': " Brightness of the image (only for cameras).",
+    #  'CV_CAP_PROP_CONTRAST': " Contrast of the image (only for cameras).",
+    # 'CV_CAP_PROP_SATURATION': " Saturation of the image (only for cameras).",
+    # 'CV_CAP_PROP_HUE': " Hue of the image (only for cameras).",
+    #   'CV_CAP_PROP_GAIN': " Gain of the image (only for cameras).",
+    #   'CV_CAP_PROP_EXPOSURE': " Exposure (only for cameras).",
+    #  'CV_CAP_PROP_CONVERT_RGB': " Boolean flags indicating whether images should be converted to RGB.",
+    # 'CV_CAP_PROP_WHITE_BALANCE': " Currently unsupported",
+    # 'CV_CAP_PROP_RECTIFICATION': " Rectification flag for stereo cameras"
+    # }
     return render_template('device.html', device_id=device_id,
                            content_url='/devices/{}/content/'.format(int(device_id)),
                            camera_config=camera_config)

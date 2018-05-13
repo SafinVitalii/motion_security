@@ -6,9 +6,28 @@ import cv2
 import numpy as np
 from imutils.video import VideoStream
 
+from app.info import available_devices
 from processors.basicmotiondetector import BasicMotionDetector
 from processors.buffer import Buffer
 from processors.mailer import Mailer
+
+d = []
+STATUS_NEW = 1
+STATUS_AVAILABLE = 2
+STATUS_PROVISIONING = 3
+STATUS_LIVE = 4
+CAMERA_PROPS = ['CV_CAP_PROP_POS_MSEC', 'CV_CAP_PROP_FPS',
+                'CV_CAP_PROP_CONTRAST', 'CV_CAP_PROP_POS_FRAMES', 'CV_CAP_PROP_HUE',
+                'CV_CAP_PROP_WHITE_BALANCE', 'CV_CAP_PROP_RECTIFICATION',
+                'CV_CAP_PROP_POS_AVI_RATIO', 'CV_CAP_PROP_MODE',
+                'CV_CAP_PROP_BRIGHTNESS', 'CV_CAP_PROP_FORMAT', 'CV_CAP_PROP_CONVERT_RGB',
+                'CV_CAP_PROP_GAIN', 'CV_CAP_PROP_SATURATION', 'CV_CAP_PROP_FOURCC']
+
+
+def setup_monitors():
+    devices = available_devices()
+    for i in range(0, len(devices)):
+        d.append(Monitor(webcam_id=i))
 
 
 class Monitor(object):
@@ -18,8 +37,10 @@ class Monitor(object):
         self.webcam_id = webcam_id
         self.out_file = 'output{}.avi'.format(self.webcam_id)
         self.streamer = cv2.VideoCapture(self.webcam_id)
+        self.status = STATUS_NEW
         if not streaming:
-            self.camera_fps = self.get_optimal_fps()
+            self.camera_fps = 25
+            # self.camera_fps = self.get_optimal_fps()
             self.sleep_after_frame = 1 / self.camera_fps
             self.default_buffer_duration = 10
         if not subscribers or not isinstance(subscribers, list):
@@ -142,7 +163,7 @@ class Monitor(object):
 
     def get_optimal_fps(self):
         """ Get average FPS for the camera """
-        video = cv2.VideoCapture(self.webcam_id)
+        video = self.streamer
         num_frames = 250  # Number of frames to capture
 
         print "Capturing {} frames".format(num_frames)
@@ -159,3 +180,12 @@ class Monitor(object):
         print "Estimated frames per second : {}".format(fps)
 
         return self.camera_fps
+
+    def get_config(self):
+        props = {}
+        for idx, prop in enumerate(CAMERA_PROPS):
+            props[prop.replace('CV_CAP_PROP_', '').replace('_', ' ').capitalize()] = \
+                self.streamer.get(idx)
+
+        self.streamer.release()
+        return props
