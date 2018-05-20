@@ -68,15 +68,15 @@ a {
     border-radius: 500rem;
 }
 
-.icon.Active {
-    background-color: #54c8ff;
-}
-
 .icon.Available {
     background-color: white;
 }
 
-.icon.Disabled {
+.icon.Provisioning {
+    background-color: #54c8ff;
+}
+
+.icon.Live {
     background-color: crimson;
 }
 

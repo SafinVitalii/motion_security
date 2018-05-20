@@ -9,7 +9,7 @@ from werkzeug.utils import redirect
 from app.auth import encrypt, verify_password, login_required
 from app.info import available_devices
 from models.model import Model
-from processors.monitor import Monitor, d
+from processors.monitor import Monitor, STATUS_LIVE, STATUS_PROVISIONING, STATUS_AVAILABLE
 
 router = Blueprint('router', __name__, template_folder='templates')
 
@@ -25,13 +25,15 @@ def index():
 @login_required
 def home():
     """ Dashboard """
-    return render_template('home.html', devices=available_devices(), user=session['user'])
+    from main import container
+    return render_template('home.html', devices=container.available_devices(), user=session['user'])
 
 
 @router.route('/devices/<device_id>')
 @login_required
 def device(device_id):
     """ Camera home """
+    from main import container
     try:
         int(device_id)
     except ValueError:
@@ -46,7 +48,7 @@ def device(device_id):
     else:
         abort(Response(status=requests.codes.not_found, response="Device not found."))
 
-    camera_config = d[int(device_id)].get_config()
+    camera_config = container.d[int(device_id)].get_config()
     # Sample config:
     # camera_config = {
     #   'CV_CAP_PROP_POS_MSEC': "Current position of the video file in milliseconds",
@@ -74,11 +76,14 @@ def device(device_id):
                            camera_config=camera_config)
 
 
-@router.route('/devices/<device_id>/content/')
+@router.route('/devices/<int:device_id>/content/')
 @login_required
 def content(device_id):
     """ Page for video frame """
-    return render_template('content.html', video_url='/devices/{}/video/'.format(int(device_id)))
+    from main import container
+    container.d[device_id].set_status(STATUS_LIVE)
+    return render_template('content.html', video_url='/devices/{}/video/'.format(int(device_id)),
+                           device_id=device_id)
 
 
 @router.route('/devices/<int:device_id>/video/')
@@ -88,6 +93,29 @@ def video(device_id):
     monitor = Monitor(webcam_id=int(device_id), subscribers=[], streaming=True)
     return Response(monitor.stream(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+@router.route('/devices/<int:device_id>/start/', methods=['POST'])
+@login_required
+def start(device_id):
+    """ Start auto provisioning """
+    from main import container
+    if container.is_monitor_available(device_id):
+        container.d[device_id].set_status(STATUS_PROVISIONING)
+        container.d[device_id].start()
+        return '', 200
+    return '', 403
+
+
+@router.route('/devices/<int:device_id>/stop/', methods=['POST'])
+@login_required
+def stop(device_id):
+    """ Stop auto provisioning """
+    from main import container
+    if container.is_monitor_provisioning(device_id) or container.is_monitor_live(device_id):
+        container.d[device_id].set_status(STATUS_AVAILABLE)
+        return '', 200
+    return '', 403
 
 
 @router.route('/login/', methods=['GET', 'POST'])

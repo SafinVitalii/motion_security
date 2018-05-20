@@ -3,6 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <title>Device page</title>
+    <script src="/static/jquery-min.js"></script>
+    <script type="text/javascript">
+        $(function() {
+            $('#start').click(function() {
+                $.ajax({
+                    url: '/devices/{{device_id}}/start/',
+                    data: '',
+                    type: 'POST',
+                    success: function(response) {
+                        console.log(response);
+                    },
+                    error: function(error) {
+                        console.log(error);
+                    }
+                });
+            });
+        });
+        $(function() {
+            $('#stop').click(function() {
+                $.ajax({
+                    url: '/devices/{{device_id}}/stop/',
+                    data: '',
+                    type: 'POST',
+                    success: function(response) {
+                        console.log(response);
+                    },
+                    error: function(error) {
+                        console.log(error);
+                    }
+                });
+            });
+        });
+    </script>
 </head>
 <body>
 <h4>Device {{device_id}} page</h4>
@@ -18,5 +51,7 @@
     {% endfor %}
 </ul>
 <a href="{{content_url}}">Live content</a>
+<button id="start" type="button">Start</button>
+<button id="stop" type="button">Stop</button>
 </body>
 </html>

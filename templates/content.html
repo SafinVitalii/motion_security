@@ -1,9 +1,26 @@
 <html>
-  <head>
+<head>
     <title>Video Streaming Demonstration</title>
-  </head>
-  <body>
-    <h1>Video Streaming Demonstration</h1>
-    <img src="{{video_url}}">
-  </body>
+    <script src="/static/jquery-min.js"></script>
+    <script type="text/javascript">
+    window.addEventListener("beforeunload", function (e) {
+  $.ajax({
+            url: '/devices/{{device_id}}/stop/',
+            data: '',
+            type: 'POST',
+            success: function(response) {
+                console.log(response);
+            },
+            error: function(error) {
+                console.log(error);
+            }
+        });
+});
+
+    </script>
+</head>
+<body>
+<h1>Video Streaming Demonstration</h1>
+<img src="{{video_url}}">
+</body>
 </html>

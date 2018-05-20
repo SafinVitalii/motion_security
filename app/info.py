@@ -6,4 +6,5 @@ def available_devices():
     resp = []
     for _ in video_devices:
         resp.append({str(len(resp)): "Available"})
-    return [{'0': 'Available'}, {'1': 'Active'}]
+    return resp
+    # return [{'0': 'Available'}, {'1': 'Active'}]
