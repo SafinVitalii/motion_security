@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Configuration page</title>
+</head>
+<body>
+<h3>Monitoring configuration for camera # {{device_id}}</h3>
+<form method="post" action="/devices/{{device_id}}/configuration/">
+    <br>
+    <label for="subscribers">Subscribers:</label>
+    <input type="text" class="form-control" id="subscribers" name="subscribers" value="{{subscribers}}"
+           placeholder="Comma-separated list of e-mails.">
+    <br>
+    <label for="duration">Buffer duration:</label>
+    <input type="text" class="form-control" id="duration" name="duration" value="{{duration}}"
+           placeholder="Video buffer duration.">
+    <label for="fps">FPS rate:</label>
+    <input type="text" class="form-control" id="fps" name="fps" value="{{fps}}"
+           placeholder="How many frames per second are recorded.">
+    <p><input type="submit" value="Edit"></p>
+    <p style="color: red;">{{error}}</p>
+    <p style="color: green;">{{success}}</p>
+</form>
+</body>
+</html>

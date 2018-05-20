@@ -118,6 +118,49 @@ def stop(device_id):
     return '', 403
 
 
+@router.route('/devices/<int:device_id>/configuration/', methods=['GET', 'POST'])
+@login_required
+def configuration(device_id):
+    """ Page for monitoring configurations """
+
+    if request.method == 'POST':
+        from main import container
+
+        form = request.form
+        error_msg = None
+        subscribers = form.get('subscribers').split(',')
+        duration = int(form.get('duration'))
+        fps = int(form.get('fps'))
+
+        # verify for errors and set error_msg
+
+        if error_msg:
+            return render_template(
+                'configuration.html', error=error_msg, subscribers=subscribers,
+                duration=duration, fps=fps
+            ), requests.codes.bad_request
+
+        container.d[device_id].subscribers = subscribers
+        container.d[device_id].default_buffer_duration = duration
+        container.d[device_id].camera_fps = fps
+
+        monitor = container.d[device_id]
+        return render_template(
+            'configuration.html', subscribers=','.join(monitor.subscribers),
+            duration=monitor.default_buffer_duration, fps=monitor.camera_fps,
+            device_id=device_id, success="Configurations were changed successfully."
+        )
+
+    else:
+        from main import container
+        monitor = container.d[device_id]
+        return render_template(
+            'configuration.html', subscribers=','.join(monitor.subscribers),
+            duration=monitor.default_buffer_duration, fps=monitor.camera_fps,
+            device_id=device_id
+        )
+
+
 @router.route('/login/', methods=['GET', 'POST'])
 def login():
     """ Login page """
