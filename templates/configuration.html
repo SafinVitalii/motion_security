@@ -9,7 +9,8 @@
 <form method="post" action="/devices/{{device_id}}/configuration/">
     <br>
     <label for="subscribers">Subscribers:</label>
-    <input type="text" class="form-control" id="subscribers" name="subscribers" value="{{subscribers}}"
+    <input type="text" class="form-control" id="subscribers" name="subscribers"
+           value="{{subscribers}}"
            placeholder="Comma-separated list of e-mails.">
     <br>
     <label for="duration">Buffer duration:</label>
@@ -22,6 +23,8 @@
     <p style="color: red;">{{error}}</p>
     <p style="color: green;">{{success}}</p>
 </form>
-<a href="/devices/{{device_id}}"><button type="button" id="back">Back</button></a>
+<a href="/devices/{{device_id}}">
+    <button type="button" id="back">Back</button>
+</a>
 </body>
 </html>
