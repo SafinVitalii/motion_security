@@ -32,6 +32,7 @@ CAMERA_PROPS = ['CV_CAP_PROP_POS_MSEC', 'CV_CAP_PROP_FPS',
 class MonitorContainer(object):
     def __init__(self):
         self.d = []
+        self.setup_monitors()
 
     def setup_monitors(self):
         devices = available_devices()
@@ -73,8 +74,7 @@ class Monitor(object):
         self.streamer = None
         self.status = STATUS_AVAILABLE
         if not streaming:
-            self.camera_fps = 25
-            # self.camera_fps = self.get_optimal_fps()
+            self.camera_fps = self.get_optimal_fps()
             self.sleep_after_frame = 1 / self.camera_fps
             self.default_buffer_duration = 10
         if not subscribers or not isinstance(subscribers, list):
@@ -212,6 +212,7 @@ class Monitor(object):
         video = self.streamer
         num_frames = 250  # Number of frames to capture
 
+        print "Setting up camera #{}".format(self.webcam_id)
         print "Capturing {} frames".format(num_frames)
 
         start = time.time()

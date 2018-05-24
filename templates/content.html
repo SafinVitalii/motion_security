@@ -16,11 +16,37 @@
             }
         });
 });
-
+window.addEventListener("onbeforeunload", function (e) {
+  $.ajax({
+            url: '/devices/{{device_id}}/stop/',
+            data: '',
+            type: 'POST',
+            success: function(response) {
+                console.log(response);
+            },
+            error: function(error) {
+                console.log(error);
+            }
+        });
+});
+window.addEventListener("onunload", function (e) {
+  $.ajax({
+            url: '/devices/{{device_id}}/stop/',
+            data: '',
+            type: 'POST',
+            success: function(response) {
+                console.log(response);
+            },
+            error: function(error) {
+                console.log(error);
+            }
+        });
+});
     </script>
 </head>
 <body>
 <h1>Video Streaming Demonstration</h1>
-<img src="{{video_url}}">
+<img src="{{video_url}}" id="stream">
+<a href="/devices/{{device_id}}"><button type="button" id="back">Back</button></a>
 </body>
 </html>

@@ -7,7 +7,6 @@ from processors.monitor import MonitorContainer
 
 app = Flask(__name__)
 container = MonitorContainer()
-container.setup_monitors()
 s = Session()
 
 if __name__ == '__main__':

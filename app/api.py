@@ -1,15 +1,13 @@
-import re
-from email.utils import parseaddr
-
 import requests
 from flask import Blueprint, render_template, Response, request, session
 from werkzeug.exceptions import abort
 from werkzeug.utils import redirect
 
-from app.auth import encrypt, verify_password, login_required
+from app.auth import encrypt, login_required
 from app.info import available_devices
 from models.model import Model
 from processors.monitor import Monitor, STATUS_LIVE, STATUS_PROVISIONING, STATUS_AVAILABLE
+from validators.validators import validate_registration_form, validate_login_form
 
 router = Blueprint('router', __name__, template_folder='templates')
 
@@ -27,6 +25,13 @@ def home():
     """ Dashboard """
     from main import container
     return render_template('home.html', devices=container.available_devices(), user=session['user'])
+
+
+@router.route('/devices/')
+@login_required
+def devices_redirect():
+    """ Redirect to home """
+    return redirect('/home'), requests.codes.found
 
 
 @router.route('/devices/<device_id>')
@@ -81,9 +86,12 @@ def device(device_id):
 def content(device_id):
     """ Page for video frame """
     from main import container
-    container.d[device_id].set_status(STATUS_LIVE)
-    return render_template('content.html', video_url='/devices/{}/video/'.format(int(device_id)),
-                           device_id=device_id)
+    if container.is_monitor_available(device_id):
+        container.d[device_id].set_status(STATUS_LIVE)
+        return render_template('content.html',
+                               video_url='/devices/{}/video/'.format(int(device_id)),
+                               device_id=device_id)
+    return 'Device is already in use.', 403
 
 
 @router.route('/devices/<int:device_id>/video/')
@@ -104,7 +112,7 @@ def start(device_id):
         container.d[device_id].set_status(STATUS_PROVISIONING)
         container.d[device_id].start()
         return '', 200
-    return '', 403
+    return 'Device is already started.', 403
 
 
 @router.route('/devices/<int:device_id>/stop/', methods=['POST'])
@@ -130,7 +138,7 @@ def configuration(device_id):
         error_msg = None
         subscribers = form.get('subscribers').split(',')
         duration = int(form.get('duration'))
-        fps = int(form.get('fps'))
+        fps = float(form.get('fps'))
 
         # verify for errors and set error_msg
 
@@ -167,16 +175,7 @@ def login():
     if request.method == 'POST':
         form = request.form
 
-        error_msg = None
-        if not form.get('email') or not form.get('password'):
-            error_msg = 'Both email and password are required!'
-
-        email = form.get('email')
-        password = str(form.get('password'))
-        result = verify_password(email, password)
-
-        if not result:
-            error_msg = 'Error occured when logging in. Please verify your credentials.'
+        error_msg = validate_login_form(form)
 
         if error_msg:
             return render_template(
@@ -184,7 +183,7 @@ def login():
                 password=form.get('password')
             ), requests.codes.bad_request
 
-        return redirect('/home'), requests.codes.ok
+        return redirect('/home'), requests.codes.found
 
     else:
         return render_template('login.html'), requests.codes.ok
@@ -203,19 +202,7 @@ def register():
     if request.method == 'POST':
         form = request.form
 
-        error_msg = None
-        if not form.get('email') or not form.get('password'):
-            error_msg = 'Both email and password are required!'
-        elif parseaddr(form.get('email'))[1] == '':
-            error_msg = 'Invalid email! Please try again.'
-        elif Model(table='users').read(form.get('email')):
-            error_msg = 'User with such email already exists.'
-        elif len(form.get('password')) < 8:
-            error_msg = 'Make sure your password is at least 8 letters.'
-        elif not re.search('[0-9]', form.get('password')):
-            error_msg = 'Make sure your password has a number in it.'
-        elif not re.search('[A-Z]', form.get('password')):
-            error_msg = 'Make sure your password has a capital letter in it.'
+        error_msg = validate_registration_form(form)
 
         if error_msg:
             return render_template(
@@ -228,7 +215,7 @@ def register():
         user = Model(table='users')
         hashed_password = encrypt(password)
         user.create(row={'email': email, 'password': hashed_password})
-        return redirect('/home')
+        return redirect('/home'), requests.codes.found
     else:
         return render_template('register.html')
 

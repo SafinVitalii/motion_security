@@ -5,7 +5,7 @@
     <title>Configuration page</title>
 </head>
 <body>
-<h3>Monitoring configuration for camera # {{device_id}}</h3>
+<h3>Monitoring configuration for camera #{{device_id}}</h3>
 <form method="post" action="/devices/{{device_id}}/configuration/">
     <br>
     <label for="subscribers">Subscribers:</label>
@@ -22,5 +22,6 @@
     <p style="color: red;">{{error}}</p>
     <p style="color: green;">{{success}}</p>
 </form>
+<a href="/devices/{{device_id}}"><button type="button" id="back">Back</button></a>
 </body>
 </html>

@@ -40,7 +40,7 @@
 <body>
 <h4>Device {{device_id}} page</h4>
 <br>
-<h3>Camera stats</h3>
+<h3 id="header">Camera stats</h3>
 <ul>
     {% for key, value in camera_config.iteritems() %}
 
@@ -50,9 +50,10 @@
 
     {% endfor %}
 </ul>
-<a href="{{content_url}}">Live content</a>
-<a href="/devices/{{device_id}}/configuration">Configuration</a>
+<a href="{{content_url}}" id="live">Live content</a>
+<a href="/devices/{{device_id}}/configuration" id="config">Configuration</a>
 <button id="start" type="button">Start</button>
 <button id="stop" type="button">Stop</button>
+<a href="/home"><button type="button" id="home">Home</button></a>
 </body>
 </html>
