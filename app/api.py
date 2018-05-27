@@ -1,8 +1,13 @@
+import itertools
+
+import datetime
+import json
+
 import requests
-from flask import Blueprint, render_template, Response, request, session
+from flask import Blueprint, render_template, Response, request, session, send_from_directory
 from werkzeug.exceptions import abort
 from werkzeug.utils import redirect
-
+from collections import OrderedDict
 from app.auth import encrypt, login_required
 from app.info import available_devices
 from models.model import Model
@@ -34,7 +39,7 @@ def devices_redirect():
     return redirect('/home'), requests.codes.found
 
 
-@router.route('/devices/<device_id>')
+@router.route('/devices/<device_id>/')
 @login_required
 def device(device_id):
     """ Camera home """
@@ -218,6 +223,40 @@ def register():
         return redirect('/home'), requests.codes.found
     else:
         return render_template('register.html')
+
+
+@router.route('/alerts/', methods=['GET'])
+def alerts():
+    alert = Model(table='alerts')
+    alerts = alert.read_all()
+    resp = dict()
+    resp['total'] = len(alerts)
+
+    if request.args.get("detailed") == 'false':
+        current_date = datetime.datetime.now()
+        alerts_by_day = OrderedDict()
+        for i in range(4, -1, -1):
+            alerts_by_day[(current_date - datetime.timedelta(days=i)).strftime('%x')] = 0
+        for al in alerts:
+            alerts_by_day[al[2].split()[0]] += 1
+        return json.dumps(alerts_by_day)
+
+    else:
+        resp['by_day'] = [
+            list(group) for k, group in itertools.groupby(
+                alerts, lambda d: datetime.datetime.strptime(d[2].split(' ')[0], '%x')
+            )]
+        resp['by_webcam'] = [
+            list(group) for k, group in itertools.groupby(
+                alerts, lambda d: d[1])
+        ]
+
+        return render_template('alerts.html', alerts=resp)
+
+
+@router.route('/static/alerts/<file_name>')
+def static_data(file_name):
+    return send_from_directory('./static/alerts/', file_name)
 
 
 @router.route('/help/')

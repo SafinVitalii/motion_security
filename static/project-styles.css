@@ -83,3 +83,15 @@ a {
 .icon.bordered {
     border: 1px solid dimgray;
 }
+
+canvas {
+    style=max-width: 400px !important;
+    max-height: 300px !important;
+    display: inline-block
+}
+
+div.chartjs-size-monitor {
+    style=max-width: 400px !important;
+    max-height: 300px !important;
+    display: inline-block
+}

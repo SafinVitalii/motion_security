@@ -1,7 +1,8 @@
 import datetime
 import os
-import time
+import re
 import threading
+import time
 
 import cv2
 import imutils
@@ -9,6 +10,7 @@ import numpy as np
 from imutils.video import VideoStream
 
 from app.info import available_devices
+from models.model import Model
 from processors.basicmotiondetector import BasicMotionDetector
 from processors.buffer import Buffer
 from processors.mailer import Mailer
@@ -70,7 +72,8 @@ class Monitor(object):
         self.mailer = Mailer()
         self.fourcc = cv2.VideoWriter_fourcc(*'XVID')
         self.webcam_id = webcam_id
-        self.out_file = 'output{}.avi'.format(self.webcam_id)
+        self.out_file = './static/alerts/output{}.avi'.format(self.webcam_id)
+        self.alert_file = './static/alerts/alert_webcam{}_DATE'.format(self.webcam_id)
         self.streamer = None
         self.status = STATUS_AVAILABLE
         if not streaming:
@@ -97,6 +100,7 @@ class Monitor(object):
         merged_buffers = 1
         frame_limit = self.camera_fps * self.default_buffer_duration
 
+        print "Started recording at {}".format(datetime.datetime.now().strftime('%x %X'))
         while self.status == STATUS_PROVISIONING:
             time.sleep(self.sleep_after_frame)
 
@@ -148,7 +152,7 @@ class Monitor(object):
 
             if not buffer.motions \
                     and motions_in_previous \
-                    and len(buffer) >= frame_limit * merged_buffers\
+                    and len(buffer) >= frame_limit * merged_buffers \
                     or merged_buffers == 10:
                 out = cv2.VideoWriter(
                     os.path.join(os.getcwd(), self.out_file),
@@ -156,6 +160,16 @@ class Monitor(object):
                 )
                 for frame in buffer:
                     out.write(frame)
+
+                alert_time = datetime.datetime.now().strftime('%x %X')
+                alert_date = re.sub('[/: ]', '_', alert_time)
+                alert_path = self.alert_file.replace('DATE', alert_date)
+                os.popen(
+                    "ffmpeg -i '{input}' -ac 2 -b:v 2000k -c:a aac -c:v libx264 -b:a 160k "
+                    "-vprofile high -bf 0 -strict experimental -f mp4 '{output}.mp4'".format(
+                        input=os.path.join(os.getcwd(), self.out_file), output=alert_path)
+                )
+
                 print "Clearing buffer of {} frames.".format(len(buffer))
                 del buffer[:]
                 motions_in_previous = False
@@ -172,14 +186,23 @@ class Monitor(object):
                 if len(self.subscribers) > 5:
                     print "And a few others. Total mails sent: {}".format(len(self.subscribers))
 
+                alert = Model(table='alerts')
+                alert.create(row={
+                    'camera_id': self.webcam_id,
+                    'alert_time': alert_time,
+                    'alert_image_path': alert_path[1:] + '.mp4',
+                })
+
+                print "Alert was saved."
+
             elif len(buffer) >= frame_limit * merged_buffers:
                 if buffer.motions:
                     print "Continue with recording. Current buffer size: {} seconds".format(
-                        len(buffer) / self.camera_fps
+                        int(len(buffer) / self.camera_fps)
                     )
                     merged_buffers += 1
                 else:
-                    print "Dropping buffer of {} frames.".format(len(buffer))
+                    print "Dropping buffer of {} frames. No alerts observed. ".format(len(buffer))
                     del buffer[:]
                 buffer.motions = False
 
