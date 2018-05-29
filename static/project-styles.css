@@ -1,5 +1,16 @@
+body {
+    margin: 0;
+}
+
+iframe.navigation {
+    position: fixed;
+    top: 0;
+    width: 100%;
+}
+
 div.page-content {
     padding: 3em;
+    margin-top: 2em;
 }
 
 div.columns {
@@ -84,14 +95,36 @@ a {
     border: 1px solid dimgray;
 }
 
+img.video{
+    max-width: 100%;
+}
+
 canvas {
-    style=max-width: 400px !important;
-    max-height: 300px !important;
+    max-width: 40em;
     display: inline-block
 }
 
-div.chartjs-size-monitor {
-    style=max-width: 400px !important;
-    max-height: 300px !important;
-    display: inline-block
+button{
+    background: #e0e1e2 none;
+    padding: .78571429em 1.5em .78571429em;
+    border-radius: .28571429rem;
+    box-shadow: 0 0 0 1px transparent inset, 0 0 0 0 rgba(34,36,38,.15) inset;
+    font-weight: 700;
+    color: rgba(0,0,0,.6);
+    font-family: Lato,'Helvetica Neue',Arial,Helvetica,sans-serif;
+}
+
+input{
+    padding: .67857143em 1em;
+    border: 1px solid rgba(34,36,38,.15);
+    border-radius: .28571429rem;
+}
+
+form{
+    max-width: 30%;
+}
+
+form>input{
+    width: 100%;
+    clear: both;
 }

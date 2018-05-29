@@ -3,12 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <title>Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='project-styles.css') }}">
 </head>
 <body>
-<a href="/login/" id="login">Login</a>
-<br>
-<a href="/register/" id="register">Register</a>
-<br>
-<a href="/help/" id="help">Help</a>
+<div class="page-content">
+    <ul>
+        <li>
+            <a href="/login/" id="login">Login</a>
+        </li>
+        <li>
+            <a href="/register/" id="register">Register</a>
+        </li>
+        <li>
+            <a href="/help/" id="help">Help</a>
+        </li>
+    </ul>
+</div>
 </body>
 </html>

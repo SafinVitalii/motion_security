@@ -3,19 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <title>Documentation page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='project-styles.css') }}">
 </head>
 <body>
-<h3>User guide</h3>
-<a href="/files/user_guide.pdf">
-    <button type="button" id="guide">User guide</button>
-</a>
-<h3>REST API Documentation</h3>
-<a href="/files/api_guide.pdf">
-    <button type="button" id="api">API guide</button>
-</a>
-<br>
-<a href="/home/">
-    <button type="button" id="home">Home</button>
-</a>
+<iframe src="/navigation"
+        class="navigation"
+        name="targetframe"
+        allowTransparency="true"
+        scrolling="no"
+        frameborder="0" >
+</iframe>
+<div class="page-content">
+    <h3>User guide</h3>
+    <ul>
+        <li>
+            <a href="/files/user_guide.pdf">
+                User guide
+            </a>
+        </li>
+    </ul>
+
+    <h3>REST API Documentation</h3>
+    <ul>
+        <li>
+            <a href="/files/api_guide.pdf">
+                API guide
+            </a>
+        </li>
+    </ul>
+            <a href="/home/">
+                Home
+            </a>
+</div>
 </body>
 </html>

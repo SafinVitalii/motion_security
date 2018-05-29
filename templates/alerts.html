@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Alerts page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='project-styles.css') }}">
     <script type="text/javascript">
 function showSpoiler(obj)
     {
@@ -18,52 +19,60 @@ function showSpoiler(obj)
     </script>
 </head>
 <body>
-<h3>Alerts by day</h3>
-{% if not alerts['by_day'] %}
-<p>No alerts found for recent days.</p>
-{% endif %}
+<iframe src="/navigation"
+        class="navigation"
+        name="targetframe"
+        allowTransparency="true"
+        scrolling="no"
+        frameborder="0" >
+</iframe>
+<div class="page-content">
+    <h3>Alerts by day</h3>
+    {% if not alerts['by_day'] %}
+    <p>No alerts found for recent days.</p>
+    {% endif %}
 
-{% for day_alerts in alerts['by_day'] %}
-<ul>
-    {% for alert in day_alerts %}
-    <li>
-        <div class="spoiler">
-            <p onclick="showSpoiler(this);" style="border: 1px solid black;">{{alert[2]}}</p>
-            <div class="inner" style="display:none;">
-                <video width="400" height="300" controls="controls">
-                    <source src="{{alert[3]}}" type="video/mp4">
-                </video>
+    {% for day_alerts in alerts['by_day'] %}
+    <ul>
+        {% for alert in day_alerts %}
+        <li>
+            <div class="spoiler">
+                <p onclick="showSpoiler(this);" style="border: 1px solid black;">{{alert[2]}}</p>
+                <div class="inner" style="display:none;">
+                    <video width="400" height="300" controls="controls">
+                        <source src="{{alert[3]}}" type="video/mp4">
+                    </video>
+                </div>
             </div>
-        </div>
-    </li>
+        </li>
+        {% endfor %}
+    </ul>
+    <hr>
     {% endfor %}
-</ul>
-<hr>
-{% endfor %}
 
-<h3>Alerts by camera</h3>
-{% if not alerts['by_webcam'] %}
-<p>No alerts found for recent days.</p>
-{% endif %}
+    <h3>Alerts by camera</h3>
+    {% if not alerts['by_webcam'] %}
+    <p>No alerts found for recent days.</p>
+    {% endif %}
 
-{% for camera_alerts in alerts['by_webcam'] %}
-<h5><a href="/devices/{{loop.index0}}/">Camera #{{loop.index0}}</a></h5>
-<ul>
-    {% for alert in camera_alerts %}
-    <li>
-        <div class="spoiler">
-            <p onclick="showSpoiler(this);" style="border: 1px solid black;">{{alert[2]}}</p>
-            <div class="inner" style="display:none;">
-                <video width="400" height="300" controls="controls">
-                    <source src="{{alert[3]}}" type="video/mp4">
-                </video>
+    {% for camera_alerts in alerts['by_webcam'] %}
+    <h5><a href="/devices/{{loop.index0}}/">Camera #{{loop.index0}}</a></h5>
+    <ul>
+        {% for alert in camera_alerts %}
+        <li>
+            <div class="spoiler">
+                <p onclick="showSpoiler(this);" style="border: 1px solid black;">{{alert[2]}}</p>
+                <div class="inner" style="display:none;">
+                    <video width="400" height="300" controls="controls">
+                        <source src="{{alert[3]}}" type="video/mp4">
+                    </video>
+                </div>
             </div>
-        </div>
-    </li>
+        </li>
+        {% endfor %}
+    </ul>
+    <hr>
     {% endfor %}
-</ul>
-<hr>
-{% endfor %}
-
+</div>
 </body>
 </html>

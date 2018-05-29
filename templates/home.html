@@ -8,6 +8,13 @@
     <script src="/static/chart.js"></script>
 </head>
 <body>
+<iframe src="/navigation"
+        class="navigation"
+        name="targetframe"
+        allowTransparency="true"
+        scrolling="no"
+        frameborder="0" >
+</iframe>
 <div class="page-content">
     <div class="columns">
         <div class="column">
@@ -39,72 +46,59 @@
         </div>
     </div>
 </div>
-<a href="/logout">Log out</a>
-<p>Current user: {{user}}</p>
-<a href="/help/">
-    <button type="button" id="help">Help</button>
-</a>
-<br>
-<a href="/documentation/">
-    <button type="button" id="documentation">Documentation</button>
-</a>
-<br>
-<a href="/alerts/">
-    <button type="button" id="alerts">Alerts</button>
-</a>
 </body>
 <script>
-var ctx = document.getElementById("alertChart").getContext('2d');
-var resp = null;
-$.ajax({
-            url: '/alerts?detailed=false',
-            async: false,
-            type: 'GET',
-            success: function(response) {
-                resp = JSON.parse(response);
-            },
-            error: function(error) {
-                console.log(error);
-            }
-        });
-console.log(resp);
-var myChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: Object.keys(resp),
-        datasets: [{
-            label: '# of Alerts',
-            data: Object.values(resp),
-            backgroundColor: [
-                'rgba(255, 99, 132, 0.2)',
-                'rgba(54, 162, 235, 0.2)',
-                'rgba(255, 206, 86, 0.2)',
-                'rgba(75, 192, 192, 0.2)',
-                'rgba(153, 102, 255, 0.2)',
-                'rgba(255, 159, 64, 0.2)'
-            ],
-            borderColor: [
-                'rgba(255,99,132,1)',
-                'rgba(54, 162, 235, 1)',
-                'rgba(255, 206, 86, 1)',
-                'rgba(75, 192, 192, 1)',
-                'rgba(153, 102, 255, 1)',
-                'rgba(255, 159, 64, 1)'
-            ],
-            borderWidth: 1
-        }]
-    },
-    options: {
-        responsive: true,
-        scales: {
-            yAxes: [{
-                ticks: {
-                    beginAtZero:true
-                }
-            }]
+    var ctx = document.getElementById("alertChart").getContext('2d');
+    var resp = null;
+    $.ajax({
+        url: '/alerts?detailed=false',
+        async: false,
+        type: 'GET',
+        success: function (response) {
+            resp = JSON.parse(response);
+        },
+        error: function (error) {
+            console.log(error);
         }
-    }
-});
+    });
+    console.log(resp);
+    var myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(resp),
+            datasets: [{
+                label: '# of Alerts',
+                data: Object.values(resp),
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(153, 102, 255, 0.2)',
+                    'rgba(255, 159, 64, 0.2)'
+                ],
+                borderColor: [
+                    'rgba(255,99,132,1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            }
+        }
+    });
 
 </script>
 </html>
