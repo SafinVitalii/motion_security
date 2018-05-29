@@ -31,6 +31,12 @@ def home():
     from main import container
     return render_template('home.html', devices=container.available_devices(), user=session['user'])
 
+@router.route('/navigation/')
+@login_required
+def navigation():
+    """ Navigation """
+    from main import container
+    return render_template('navigation.html', user=session['user'])
 
 @router.route('/devices/')
 @login_required

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='navigation-styles.css') }}">
+</head>
+<body>
+<ul>
+    <li><a target="_top" href="/home">Home</a></li>
+    <li><a target="_top" href="/documentation">Documentation</a></li>
+    <li><a target="_top" href="/alerts">Alerts</a></li>
+    <li><a target="_top" href="/help">Help</a></li>
+    <li class="float-right">
+        <a target="_top" href="/logout">Log out from user: {{user}}</a>
+    </li>
+</ul>
+</body>
+</html>

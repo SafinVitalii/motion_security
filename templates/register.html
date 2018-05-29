@@ -2,23 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='project-styles.css') }}">
     <title>Registration</title>
 </head>
 <body>
-<h4>Register</h4>
-<br>
-<form method="post" action="/register/">
-    <!-- Try not to edit the backend mappings -->
+<div class="page-content">
+    <h4>Register</h4>
     <br>
-    <label for="email">Email:</label>
-    <input type="text" class="form-control" id="email" name="email" value="{{email}}"
-           placeholder="Your email will be used to contact you.">
-    <br>
-    <label for="password">Password:</label>
-    <input type="password" class="form-control" id="password" name="password" value="{{password}}"
-           placeholder="Enter a password.">
-    <p><input type="submit" value="Register" id="register"></p>
-    <p style="color: red;">{{error}}</p>
-</form>
+    <form method="post" action="/register/">
+        <!-- Try not to edit the backend mappings -->
+        <br>
+        <label for="email">Email:</label>
+        <input type="text" class="form-control" id="email" name="email" value="{{email}}"
+               placeholder="Your email will be used to contact you.">
+        <br>
+        <label for="password">Password:</label>
+        <input type="password" class="form-control" id="password" name="password" value="{{password}}"
+               placeholder="Enter a password.">
+        <p><input type="submit" value="Register" id="register"></p>
+        <p style="color: red;">{{error}}</p>
+    </form>
+</div>
 </body>
 </html>

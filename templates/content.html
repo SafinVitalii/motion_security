@@ -1,6 +1,7 @@
 <html>
 <head>
     <title>Video Streaming Demonstration</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='project-styles.css') }}">
     <script src="/static/jquery-min.js"></script>
     <script type="text/javascript">
     window.addEventListener("beforeunload", function (e) {
@@ -45,8 +46,18 @@ window.addEventListener("onunload", function (e) {
     </script>
 </head>
 <body>
-<h1>Video Streaming Demonstration</h1>
-<img src="{{video_url}}" id="stream">
-<a href="/devices/{{device_id}}"><button type="button" id="back">Back</button></a>
+<iframe src="/navigation"
+        class="navigation"
+        name="targetframe"
+        allowTransparency="true"
+        scrolling="no"
+        frameborder="0" >
+</iframe>
+<div class="page-content">
+    <h1>Video Streaming Demonstration</h1>
+    <img class="video" src="{{video_url}}" id="stream">
+    <br>
+    <a href="/devices/{{device_id}}"><button type="button" id="back">Back</button></a>
+</div>
 </body>
 </html>

@@ -3,19 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <title>Help page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='project-styles.css') }}">
 </head>
 <body>
-<h2 id="head">Frequently asked questions</h2>
-<hr>
-<h4>What is behind the scenes of a website?</h4>
-<p>Python-based application hosted with Flask framework</p>
-<h4>How do I access the system?</h4>
-<p>You should complete as simple registration procedure here: <a href="/register/">Link</a></p>
-<h4>When will I receive a notification about security incidents?</h4>
-<p>Right after everything suspicious will be recorded, you will receive an alert via the e-mail</p>
-<br>
-<a href="/home/">
-    <button type="button" id="home">Home</button>
-</a>
+<iframe src="/navigation"
+        class="navigation"
+        name="targetframe"
+        allowTransparency="true"
+        scrolling="no"
+        frameborder="0" >
+</iframe>
+<div class="page-content">
+    <h2 id="head">Frequently asked questions</h2>
+    <hr>
+    <h4>What is behind the scenes of a website?</h4>
+    <p>Python-based application hosted with Flask framework</p>
+    <h4>How do I access the system?</h4>
+    <p>You should complete as simple registration procedure here: <a href="/register/">Link</a></p>
+    <h4>When will I receive a notification about security incidents?</h4>
+    <p>Right after everything suspicious will be recorded, you will receive an alert via the e-mail</p>
+    <br>
+</div>
 </body>
 </html>
