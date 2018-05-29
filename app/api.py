@@ -266,6 +266,7 @@ def static_data(file_name):
 
 
 @router.route('/help/')
+@login_required
 def help():
     """ FAQ page """
     return render_template('help.html')
