@@ -16,4 +16,4 @@ if __name__ == '__main__':
     s.init_app(app)
 
     app.register_blueprint(router)
-    app.run(host='192.168.0.103')
+    app.run()
