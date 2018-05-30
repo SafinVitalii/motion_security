@@ -85,11 +85,6 @@ class Monitor(object):
         self.subscribers = subscribers
 
     def start(self):
-        t = threading.Thread(target=self._start())
-        t.setDaemon(True)
-        t.start()
-
-    def _start(self):
         """ Automatic motion capturing """
         webcam = VideoStream(src=self.webcam_id).start()
         cam_motion = BasicMotionDetector()

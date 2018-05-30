@@ -13,9 +13,6 @@ function showSpoiler(obj)
     else
         inner.style.display = "none";
     }
-
-
-
     </script>
 </head>
 <body>
@@ -27,7 +24,7 @@ function showSpoiler(obj)
         frameborder="0" >
 </iframe>
 <div class="page-content">
-    <h3>Alerts by day</h3>
+    <h3 id="alerts_by_day">Alerts by day</h3>
     {% if not alerts['by_day'] %}
     <p>No alerts found for recent days.</p>
     {% endif %}
@@ -50,7 +47,7 @@ function showSpoiler(obj)
     <hr>
     {% endfor %}
 
-    <h3>Alerts by camera</h3>
+    <h3 id="alerts_by_camera">Alerts by camera</h3>
     {% if not alerts['by_webcam'] %}
     <p>No alerts found for recent days.</p>
     {% endif %}

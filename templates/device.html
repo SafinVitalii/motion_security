@@ -13,10 +13,12 @@
                     data: '',
                     type: 'POST',
                     success: function(response) {
-                        console.log(response);
+                        $('#success_message').html('Monitoring has started.')
+                        $('#error_message').html('')
                     },
                     error: function(error) {
-                        console.log(error);
+                        $('#error_message').html('Failed to start monitoring for this camera.')
+                        $('#success_message').html('')
                     }
                 });
             });
@@ -28,10 +30,12 @@
                     data: '',
                     type: 'POST',
                     success: function(response) {
-                        console.log(response);
+                        $('#success_message').html('Monitoring was stopped.')
+                        $('#error_message').html('')
                     },
                     error: function(error) {
-                        console.log(error);
+                        $('#error_message').html('Failed to stop monitoring.')
+                        $('#success_message').html('')
                     }
                 });
             });
@@ -60,9 +64,13 @@
 
         {% endfor %}
     </ul>
-    <a href="{{content_url}}" id="live">Live content</a> | <a href="/devices/{{device_id}}/configuration" id="config">Configuration</a> |
+    <a href="{{content_url}}" id="live">Live content</a> |
+    <a href="/devices/{{device_id}}/configuration" id="config">Configuration</a>
+    <br><br>
     <button id="start" type="button">Start</button>
     <button id="stop" type="button">Stop</button>
+    <p style="color: red;" id="error_message"></p>
+    <p style="color: green;" id="success_message"></p>
 </div>
 </body>
 </html>

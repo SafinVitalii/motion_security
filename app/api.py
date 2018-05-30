@@ -2,14 +2,15 @@ import itertools
 
 import datetime
 import json
+import threading
 
 import requests
 from flask import Blueprint, render_template, Response, request, session, send_from_directory
 from werkzeug.exceptions import abort
 from werkzeug.utils import redirect
 from collections import OrderedDict
-from app.auth import encrypt, login_required
-from app.info import available_devices
+from app.auth import encrypt, login_required, get_or_create_token
+from app.info import available_devices, is_browser_request
 from models.model import Model
 from processors.monitor import Monitor, STATUS_LIVE, STATUS_PROVISIONING, STATUS_AVAILABLE
 from validators.validators import validate_registration_form, validate_login_form
@@ -21,7 +22,9 @@ router = Blueprint('router', __name__, template_folder='templates')
 @router.route('/index/')
 def index():
     """ Index page """
-    return render_template('index.html')
+    if is_browser_request():
+        return render_template('index.html')
+    return json.dumps("Index page. Possible actions: /login, /register, /help\n")
 
 
 @router.route('/home/')
@@ -29,20 +32,20 @@ def index():
 def home():
     """ Dashboard """
     from main import container
-    return render_template('home.html', devices=container.available_devices(), user=session['user'])
+    if is_browser_request():
+        return render_template('home.html', devices=container.available_devices(),
+                               user=session['user'])
+    return json.dumps({'devices': container.available_devices(), 'user': session['user']})
+
 
 @router.route('/navigation/')
 @login_required
 def navigation():
     """ Navigation """
-    from main import container
-    return render_template('navigation.html', user=session['user'])
-
-@router.route('/devices/')
-@login_required
-def devices_redirect():
-    """ Redirect to home """
-    return redirect('/home'), requests.codes.found
+    if is_browser_request():
+        return render_template('navigation.html', user=session['user'])
+    else:
+        return json.dumps("UI specific endpoint. Nothing there"), 200
 
 
 @router.route('/devices/<device_id>/')
@@ -64,38 +67,23 @@ def device(device_id):
     else:
         abort(Response(status=requests.codes.not_found, response="Device not found."))
 
+    # Sample config can be found in camera_config_sample.txt
     camera_config = container.d[int(device_id)].get_config()
-    # Sample config:
-    # camera_config = {
-    #   'CV_CAP_PROP_POS_MSEC': "Current position of the video file in milliseconds",
-    #  'CV_CAP_PROP_POS_FRAMES': " 0-based index of the frame to be decoded/captured next.",
-    # 'CV_CAP_PROP_POS_AVI_RATIO': " Relative position of the video file",
-    # 'CV_CAP_PROP_FRAME_WIDTH': " Width of the frames in the video stream.",
-    #    'CV_CAP_PROP_FRAME_HEIGHT': " Height of the frames in the video stream.",
-    #   'CV_CAP_PROP_FPS': " Frame rate.",
-    #  'CV_CAP_PROP_FOURCC': " 4-character code of codec.",
-    # 'CV_CAP_PROP_FRAME_COUNT': " Number of frames in the video file.",
-    # 'CV_CAP_PROP_FORMAT': " Format of the Mat objects returned by retrieve() .",
-    #    'CV_CAP_PROP_MODE': " Backend-specific value indicating the current capture mode.",
-    #   'CV_CAP_PROP_BRIGHTNESS': " Brightness of the image (only for cameras).",
-    #  'CV_CAP_PROP_CONTRAST': " Contrast of the image (only for cameras).",
-    # 'CV_CAP_PROP_SATURATION': " Saturation of the image (only for cameras).",
-    # 'CV_CAP_PROP_HUE': " Hue of the image (only for cameras).",
-    #   'CV_CAP_PROP_GAIN': " Gain of the image (only for cameras).",
-    #   'CV_CAP_PROP_EXPOSURE': " Exposure (only for cameras).",
-    #  'CV_CAP_PROP_CONVERT_RGB': " Boolean flags indicating whether images should be converted to RGB.",
-    # 'CV_CAP_PROP_WHITE_BALANCE': " Currently unsupported",
-    # 'CV_CAP_PROP_RECTIFICATION': " Rectification flag for stereo cameras"
-    # }
-    return render_template('device.html', device_id=device_id,
-                           content_url='/devices/{}/content/'.format(int(device_id)),
-                           camera_config=camera_config)
+
+    if is_browser_request():
+        return render_template('device.html', device_id=device_id,
+                               content_url='/devices/{}/content/'.format(int(device_id)),
+                               camera_config=camera_config)
+    return json.dumps({'device_id': device_id, 'camera_config': camera_config,
+                       'content_url': '/devices/{}/content/'.format(int(device_id))})
 
 
 @router.route('/devices/<int:device_id>/content/')
 @login_required
 def content(device_id):
     """ Page for video frame """
+    if not is_browser_request():
+        return json.dumps("Live streaming is not available via API"), 400
     from main import container
     if container.is_monitor_available(device_id):
         container.d[device_id].set_status(STATUS_LIVE)
@@ -109,6 +97,8 @@ def content(device_id):
 @login_required
 def video(device_id):
     """ Video streaming route. Put this in the src attribute of an img tag """
+    if not is_browser_request():
+        return json.dumps("Live streaming is not available via API"), 400
     monitor = Monitor(webcam_id=int(device_id), subscribers=[], streaming=True)
     return Response(monitor.stream(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
@@ -121,7 +111,9 @@ def start(device_id):
     from main import container
     if container.is_monitor_available(device_id):
         container.d[device_id].set_status(STATUS_PROVISIONING)
-        container.d[device_id].start()
+        t = threading.Thread(target=container.d[device_id].start)
+        t.setDaemon(True)
+        t.start()
         return '', 200
     return 'Device is already started.', 403
 
@@ -134,7 +126,7 @@ def stop(device_id):
     if container.is_monitor_provisioning(device_id) or container.is_monitor_live(device_id):
         container.d[device_id].set_status(STATUS_AVAILABLE)
         return '', 200
-    return '', 403
+    return 'Device is already stopped.', 403
 
 
 @router.route('/devices/<int:device_id>/configuration/', methods=['GET', 'POST'])
@@ -142,10 +134,19 @@ def stop(device_id):
 def configuration(device_id):
     """ Page for monitoring configurations """
 
+    from main import container
     if request.method == 'POST':
-        from main import container
+        if not is_browser_request() and request.headers.environ['CONTENT_TYPE'] != 'application/json':
+            return json.dumps(
+                "Content-Type {} is not allowed. Only application/json is allowed".format(
+                    request.headers.environ['CONTENT_TYPE'])
+            ), 415
 
-        form = request.form
+        try:
+            form = request.form if is_browser_request() else json.loads(request.data)
+        except ValueError:
+            return json.dumps('Invalid data form specified.'), 400
+
         error_msg = None
         subscribers = form.get('subscribers').split(',')
         duration = int(form.get('duration'))
@@ -154,85 +155,140 @@ def configuration(device_id):
         # verify for errors and set error_msg
 
         if error_msg:
-            return render_template(
-                'configuration.html', error=error_msg, subscribers=subscribers,
-                duration=duration, fps=fps
-            ), requests.codes.bad_request
+            resp = {
+                'error': error_msg, 'subscribers': subscribers, 'duration': duration, 'fps': fps
+            }
+            if is_browser_request():
+                return render_template('configuration.html', **resp), 400
+            return json.dumps({'error': error_msg}), 400
 
         container.d[device_id].subscribers = subscribers
         container.d[device_id].default_buffer_duration = duration
         container.d[device_id].camera_fps = fps
 
         monitor = container.d[device_id]
-        return render_template(
-            'configuration.html', subscribers=','.join(monitor.subscribers),
-            duration=monitor.default_buffer_duration, fps=monitor.camera_fps,
-            device_id=device_id, success="Configurations were changed successfully."
-        )
+        resp = {
+            'subscribers': ','.join(monitor.subscribers),
+            'duration': monitor.default_buffer_duration,
+            'fps': monitor.camera_fps,
+            'device_id': device_id,
+            'success': "Configurations were changed successfully."
+        }
+        if is_browser_request():
+            return render_template('configuration.html', **resp)
+        resp.pop('success')
+        return json.dumps(resp), 200
 
     else:
-        from main import container
         monitor = container.d[device_id]
-        return render_template(
-            'configuration.html', subscribers=','.join(monitor.subscribers),
-            duration=monitor.default_buffer_duration, fps=monitor.camera_fps,
-            device_id=device_id
-        )
+        resp = {
+            'subscribers': ''.join(monitor.subscribers),
+            'duration': monitor.default_buffer_duration,
+            'fps': monitor.camera_fps,
+            'device_id': device_id
+        }
+        if is_browser_request():
+            return render_template('configuration.html', **resp), 200
+        return json.dumps(resp), 200
 
 
 @router.route('/login/', methods=['GET', 'POST'])
 def login():
     """ Login page """
-    if request.method == 'POST':
-        form = request.form
+    if is_browser_request():
+        if request.method == 'POST':
+            form = request.form
 
-        error_msg = validate_login_form(form)
+            error_msg = validate_login_form(form)
 
-        if error_msg:
-            return render_template(
-                'login.html', error=error_msg, email=form.get('email'),
-                password=form.get('password')
-            ), requests.codes.bad_request
+            if error_msg:
+                return render_template(
+                    'login.html', error=error_msg, email=form.get('email'),
+                    password=form.get('password')
+                ), requests.codes.bad_request
 
-        return redirect('/home'), requests.codes.found
+            return redirect('/home'), requests.codes.found
 
+        else:
+            return render_template('login.html'), requests.codes.ok
     else:
-        return render_template('login.html'), requests.codes.ok
+        if request.method != 'POST':
+            return json.dumps("GET method is not allowed for this endpoint"), 405
+        elif request.headers.environ['CONTENT_TYPE'] != 'application/json':
+            return json.dumps(
+                "Content-Type {} is not allowed. Only application/json is allowed".format(
+                    request.headers.environ['CONTENT_TYPE'])
+            ), 415
+        else:
+            form = json.loads(request.data)
+            error_msg = validate_login_form(form)
+            if error_msg:
+                return json.dumps("Invalid credentials specified: {}".format(error_msg)), 401
+            token = get_or_create_token(form.get('email'))
+            return json.dumps(token), 200
 
 
 @router.route('/logout/', methods=['GET'])
 def logout():
     """ Logout """
-    del session['user']
-    return redirect('/')
+    if is_browser_request() and session.get('user'):
+        del session['user']
+        return redirect('/')
+    return json.dumps('Logout is not available via API'), 400
 
 
 @router.route('/register/', methods=['GET', 'POST'])
 def register():
     """ User registration """
-    if request.method == 'POST':
-        form = request.form
+    if is_browser_request():
+        if request.method == 'POST':
+            form = request.form
 
-        error_msg = validate_registration_form(form)
+            error_msg = validate_registration_form(form)
 
-        if error_msg:
-            return render_template(
-                'register.html', error=error_msg, email=form.get('email'),
-                password=form.get('password')
-            ), requests.codes.bad_request
+            if error_msg:
+                return render_template(
+                    'register.html', error=error_msg, email=form.get('email'),
+                    password=form.get('password')
+                ), requests.codes.bad_request
 
-        email = str(form.get('email'))
-        password = str(form.get('password'))
-        user = Model(table='users')
-        hashed_password = encrypt(password)
-        user.create(row={'email': email, 'password': hashed_password})
-        return redirect('/home'), requests.codes.found
+            email = str(form.get('email'))
+            password = str(form.get('password'))
+            user = Model(table='users')
+            hashed_password = encrypt(password)
+            user.create(row={'email': email, 'password': hashed_password})
+            return redirect('/home'), requests.codes.found
+        else:
+            return render_template('register.html')
     else:
-        return render_template('register.html')
+        if request.method != 'POST':
+            return json.dumps("GET method is not allowed for this endpoint"), 405
+        elif request.headers.environ['CONTENT_TYPE'] != 'application/json':
+            return json.dumps(
+                "Content-Type {} is not allowed. Only application/json is allowed".format(
+                    request.headers.environ['CONTENT_TYPE'])
+            ), 415
+        else:
+            form = json.loads(request.data)
+            error_msg = validate_registration_form(form)
+            if error_msg:
+                return json.dumps("Invalid data specified: {}".format(error_msg)), 401
+            email = str(form.get('email'))
+            password = str(form.get('password'))
+            user = Model(table='users')
+            hashed_password = encrypt(password)
+            user.create(row={'email': email, 'password': hashed_password})
+
+            return json.dumps("User was successfully registered."), 200
 
 
 @router.route('/alerts/', methods=['GET'])
+@login_required
 def alerts():
+    """
+    Monitoring stats route
+    Use 'curl -O /static/alerts/video.mp4' to get video files
+    """
     alert = Model(table='alerts')
     alerts = alert.read_all()
     resp = dict()
@@ -257,7 +313,9 @@ def alerts():
                 alerts, lambda d: d[1])
         ]
 
-        return render_template('alerts.html', alerts=resp)
+        if is_browser_request():
+            return render_template('alerts.html', alerts=resp)
+        return json.dumps(resp), 200
 
 
 @router.route('/static/alerts/<file_name>')
@@ -265,15 +323,24 @@ def static_data(file_name):
     return send_from_directory('./static/alerts/', file_name)
 
 
+@router.route('/static/docs/<file_name>')
+def docs(file_name):
+    return send_from_directory('./static/docs/', file_name)
+
+
 @router.route('/help/')
 @login_required
 def help():
     """ FAQ page """
-    return render_template('help.html')
+    if is_browser_request():
+        return render_template('help.html')
+    return json.dumps('Help page. Visit /help/ page in your browser to see full content.')
 
 
 @router.route('/documentation/')
 @login_required
 def documentation():
     """ User guide and API doc """
-    return render_template('documentation.html')
+    if is_browser_request():
+        return render_template('documentation.html')
+    return json.dumps({'url': ['/static/docs/api_guide.pdf', '/static/docs/user_guide.pdf']})
