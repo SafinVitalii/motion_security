@@ -1,29 +1,8 @@
 from random import randint
 
-import pytest
 import time
-from selenium import webdriver
 
 default_timeout = 0.25
-
-
-@pytest.fixture()
-def driver():
-    d = webdriver.Chrome('/home/vitalii/chromedriver')
-    d.get('http://127.0.0.1:5000')
-    yield d
-    d.quit()
-
-
-@pytest.fixture()
-def app(driver):
-    driver.find_element_by_id('login').click()
-    time.sleep(default_timeout)
-    driver.find_element_by_id('email').send_keys("test@gmail.com")
-    driver.find_element_by_id('password').send_keys("Passw0rd#")
-    driver.find_element_by_id('login').submit()
-    time.sleep(default_timeout * 2)
-    return driver
 
 
 class TestUserInterface(object):

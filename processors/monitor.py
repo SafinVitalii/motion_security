@@ -1,7 +1,6 @@
 import datetime
 import os
 import re
-import threading
 import time
 
 import cv2
@@ -263,3 +262,6 @@ class Monitor(object):
             return False
         self.status = status
         return True
+
+    def get_status(self):
+        return STATUS_MAPPINGS.get(self.status)

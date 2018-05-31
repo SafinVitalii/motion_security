@@ -13,7 +13,8 @@ from app.auth import encrypt, login_required, get_or_create_token
 from app.info import available_devices, is_browser_request
 from models.model import Model
 from processors.monitor import Monitor, STATUS_LIVE, STATUS_PROVISIONING, STATUS_AVAILABLE
-from validators.validators import validate_registration_form, validate_login_form
+from validators.validators import validate_registration_form, validate_login_form, \
+    validate_config_form
 
 router = Blueprint('router', __name__, template_folder='templates')
 
@@ -35,7 +36,7 @@ def home():
     if is_browser_request():
         return render_template('home.html', devices=container.available_devices(),
                                user=session['user'])
-    return json.dumps({'devices': container.available_devices(), 'user': session['user']})
+    return json.dumps({'devices': container.available_devices()})
 
 
 @router.route('/navigation/')
@@ -45,7 +46,7 @@ def navigation():
     if is_browser_request():
         return render_template('navigation.html', user=session['user'])
     else:
-        return json.dumps("UI specific endpoint. Nothing there"), 200
+        return json.dumps("UI specific endpoint. Nothing there."), 200
 
 
 @router.route('/devices/<device_id>/')
@@ -54,28 +55,32 @@ def device(device_id):
     """ Camera home """
     from main import container
     try:
-        int(device_id)
+        device_id = int(device_id)
     except ValueError:
         abort(Response(status=requests.codes.bad_request, response="Invalid device id specified."))
 
     devices = available_devices()
-    if int(device_id) < 0:
+    if device_id < 0:
         abort(Response(status=requests.codes.not_found, response="Device not found."))
     for dev in devices:
-        if dev.keys()[0] == device_id:
+        if int(dev.keys()[0]) == device_id:
             break
     else:
         abort(Response(status=requests.codes.not_found, response="Device not found."))
 
     # Sample config can be found in camera_config_sample.txt
-    camera_config = container.d[int(device_id)].get_config()
+    camera_config = container.d[device_id].get_config()
 
+    resp = {
+        'device_id': device_id,
+        'content_url': '/devices/{}/content/'.format(device_id),
+        'camera_config': camera_config,
+        'status': container.d[device_id].get_status()
+    }
     if is_browser_request():
-        return render_template('device.html', device_id=device_id,
-                               content_url='/devices/{}/content/'.format(int(device_id)),
-                               camera_config=camera_config)
-    return json.dumps({'device_id': device_id, 'camera_config': camera_config,
-                       'content_url': '/devices/{}/content/'.format(int(device_id))})
+        return render_template('device.html', **resp)
+    resp.pop('content_url')
+    return json.dumps(resp), 200
 
 
 @router.route('/devices/<int:device_id>/content/')
@@ -136,7 +141,8 @@ def configuration(device_id):
 
     from main import container
     if request.method == 'POST':
-        if not is_browser_request() and request.headers.environ['CONTENT_TYPE'] != 'application/json':
+        if not is_browser_request() \
+                and request.headers.environ['CONTENT_TYPE'] != 'application/json':
             return json.dumps(
                 "Content-Type {} is not allowed. Only application/json is allowed".format(
                     request.headers.environ['CONTENT_TYPE'])
@@ -147,20 +153,19 @@ def configuration(device_id):
         except ValueError:
             return json.dumps('Invalid data form specified.'), 400
 
-        error_msg = None
-        subscribers = form.get('subscribers').split(',')
-        duration = int(form.get('duration'))
-        fps = float(form.get('fps'))
-
-        # verify for errors and set error_msg
-
+        error_msg = validate_config_form(form)
         if error_msg:
             resp = {
-                'error': error_msg, 'subscribers': subscribers, 'duration': duration, 'fps': fps
+                'error': error_msg, 'subscribers': form.get('subscribers'),
+                'duration': form.get('duration'), 'fps': form.get('fps')
             }
             if is_browser_request():
                 return render_template('configuration.html', **resp), 400
             return json.dumps({'error': error_msg}), 400
+
+        subscribers = form.get('subscribers').split(',')
+        duration = int(form.get('duration'))
+        fps = float(form.get('fps'))
 
         container.d[device_id].subscribers = subscribers
         container.d[device_id].default_buffer_duration = duration
