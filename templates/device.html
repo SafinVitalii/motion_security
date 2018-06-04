@@ -41,6 +41,8 @@
             });
         });
 
+
+
     </script>
 </head>
 <body>
@@ -49,28 +51,43 @@
         name="targetframe"
         allowTransparency="true"
         scrolling="no"
-        frameborder="0" >
+        frameborder="0">
 </iframe>
 <div class="page-content">
-    <h4>Device {{device_id}} page</h4>
-    <br>
-    <h3 id="header">Camera stats</h3>
-    <ul>
-        {% for key, value in camera_config.iteritems() %}
+    <div class="columns">
+        <div class="column">
+            <h4>Device {{device_id}} page</h4>
+            <br>
+            <h3 id="header">Camera stats</h3>
+            <ul>
+                {% for key, value in camera_config.iteritems() %}
 
-        <li>
-            <p>{{key}}: {{value}}</p>
-        </li>
+                <li>
+                    <p>{{key}}: {{value}}</p>
+                </li>
 
-        {% endfor %}
-    </ul>
-    <a href="{{content_url}}" id="live">Live content</a> |
-    <a href="/devices/{{device_id}}/configuration" id="config">Configuration</a>
-    <br><br>
-    <button id="start" type="button">Start</button>
-    <button id="stop" type="button">Stop</button>
-    <p style="color: red;" id="error_message"></p>
-    <p style="color: green;" id="success_message"></p>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="column page-content">
+            <div class="item">
+                <div class="main-content">
+                    <br>
+                    <div class="icon {{value}} cycled bordered"></div>
+                    <a href="/devices/{{key}}"> Camera {{device_id}} is {{status}} </a>
+                </div>
+                <div class="label">{{value}}</div>
+            </div>
+            <br><br>
+            <a href="{{content_url}}" id="live">Live content</a> |
+            <a href="/devices/{{device_id}}/configuration" id="config">Configuration</a>
+            <br><br>
+            <button id="start" type="button">Start</button>
+            <button id="stop" type="button">Stop</button>
+            <p style="color: red;" id="error_message"></p>
+            <p style="color: green;" id="success_message"></p>
+        </div>
+    </div>
 </div>
 </body>
 </html>

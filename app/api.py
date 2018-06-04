@@ -305,7 +305,8 @@ def alerts():
         for i in range(4, -1, -1):
             alerts_by_day[(current_date - datetime.timedelta(days=i)).strftime('%x')] = 0
         for al in alerts:
-            alerts_by_day[al[2].split()[0]] += 1
+            if alerts_by_day.get(al[2].split()[0]):
+                alerts_by_day[al[2].split()[0]] += 1
         return json.dumps(alerts_by_day)
 
     else:
