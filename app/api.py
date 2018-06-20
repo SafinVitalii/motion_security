@@ -69,8 +69,12 @@ def device(device_id):
         abort(Response(status=requests.codes.not_found, response="Device not found."))
 
     # Sample config can be found in camera_config_sample.txt
-    camera_config = container.d[device_id].get_config()
-
+    # camera_config = container.d[device_id].get_config()
+    camera_config = {'Width': 640, 'Height': 480, 'Hue': 50, 'Saturation': 50, 'Pos avi ratio': 0, 'Pos frames': 0,
+                     'Brightness': 50, 'Convert rgb': False, 'Format': 'avi',
+                     'Mode': container.d[device_id].status,
+                     'Fps': container.d[device_id].camera_fps, 'Fourcc': 'XVID', 'Pos msec': 0, 'Contrast': 50,
+                     }
     resp = {
         'device_id': device_id,
         'content_url': '/devices/{}/content/'.format(device_id),
