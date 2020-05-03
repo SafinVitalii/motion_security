@@ -1,0 +1,7 @@
+opencv-python
+imutils
+requests
+flask
+Flask-Session
+bcrypt
+Werkzeug==0.16.1
